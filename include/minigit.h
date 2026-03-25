@@ -2,7 +2,7 @@
 #define MINIGIT_H
 
 #include <time.h>
-// структура хранкния файла
+// структура хранения файла
 typedef struct FileNode {
     char *name;
     char *content;
@@ -22,5 +22,7 @@ typedef struct Commit{
 
 Commit* init_repo();
 void compute_hash(const char *data, char *out_hash);
+
+FileNode* cpy_files(FileNode *file);
 
 #endif
