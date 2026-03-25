@@ -1,0 +1,8 @@
+*.exe
+*.out
+minigit
+
+*.o
+
+.vscode/
+*.swp
