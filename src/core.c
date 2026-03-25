@@ -33,6 +33,7 @@ FileNode* cpy_files(FileNode *files) {
         } else {
             current->next = new_file;
         }
+        new_file->next = NULL;
         current = new_file;
         old_current = old_current->next;
         
