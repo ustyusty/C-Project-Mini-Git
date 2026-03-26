@@ -2,7 +2,7 @@
 #define MINIGIT_H
 
 #include <time.h>
-// структура хранкния файла
+// структура хранения файла
 typedef struct FileNode {
     char *name;
     char *content;
