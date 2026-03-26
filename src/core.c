@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include "../include/minigit.h"
 
@@ -41,15 +42,34 @@ FileNode* cpy_files(FileNode *files) {
     return new_head;
 }
 
-Commit* add_file(Commit * parent, FileNode * file_dir, FileNode* file) {
+Commit* add_file(Commit* old_commit, const char *path, const char *content) {
+    Commit * new_commit = (Commit *)malloc(sizeof(Commit));
+    new_commit->parent = old_commit;
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "add file %s", path);
+    new_commit->name = strdup(buffer);
+    // new_commit->timestamp = time();
+    new_commit->files = cpy_files(old_commit->files);
 
-    Commit *root = (Commit*)malloc(sizeof(Commit));
+    FileNode *current_file = new_commit->files;
+    while (current_file != NULL){
+        if (strcmp(current_file->name, path) == 0){
+            break;
+        }
+        current_file = current_file->next;
+    }
+    if (current_file == NULL){
+        current_file = (FileNode*)malloc(sizeof(FileNode));
+        current_file->name = strdup(path);
+        current_file->content = strdup(content);
 
-    root->name = strdup("Initial commit");
-    root->timestamp = time(NULL);
-    root->parent = NULL;
-    root->files = NULL;
-    compute_hash(root->name, root->hash);
-    return root;
+        current_file->next = new_commit->files;
+        new_commit->files = current_file;
 
+    } else {
+        current_file->content = strdup(content);
+    }
+    compute_hash(current_file->content, current_file->hash);
+    compute_hash(new_commit->name, new_commit->hash);
+    return new_commit;
 }
