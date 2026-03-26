@@ -2,8 +2,14 @@
 #include "../include/minigit.h"
 int main(void){
     Commit *first_commit = init_repo();
-    Commit *new_commit = add_file(first_commit, "new_file", "pipapopa");
-    printf("%s\n", first_commit->hash);
-    printf("%s\n", new_commit->hash);
+    Commit *add_file_1_commit = add_file(first_commit, "file1", "stuf1");
+    Commit *add_file_2_commit = add_file(add_file_1_commit, "file2", "stuf2");
+    Commit *remove_file_1_commit = remove_file(add_file_2_commit, "file3");
+    FileNode *cur = remove_file_1_commit->files;
+    while (cur != NULL)
+    {
+        printf("%s\n", cur->name);
+        cur = cur->next;
+    }
     return 0;
 }

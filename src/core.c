@@ -43,14 +43,21 @@ FileNode* cpy_files(FileNode *files) {
     return new_head;
 }
 
+Commit* create_commit_struct(Commit* parent, const char* msg) {
+    Commit* c = (Commit*)malloc(sizeof(Commit));
+    c->parent = parent;
+    c->name = strdup(msg);
+    c->timestamp = time(NULL);
+    c->files = cpy_files(parent->files);
+    compute_hash(c->name, c->hash);
+    return c;
+}
+
 Commit* add_file(Commit* old_commit, const char *path, const char *content) {
-    Commit * new_commit = (Commit *)malloc(sizeof(Commit));
-    new_commit->parent = old_commit;
+    
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "add file %s", path);
-    new_commit->name = strdup(buffer);
-    // new_commit->timestamp = time();
-    new_commit->files = cpy_files(old_commit->files);
+    Commit * new_commit = create_commit_struct(old_commit, buffer);
 
     FileNode *current_file = new_commit->files;
     while (current_file != NULL){
@@ -71,6 +78,43 @@ Commit* add_file(Commit* old_commit, const char *path, const char *content) {
         current_file->content = strdup(content);
     }
     compute_hash(current_file->content, current_file->hash);
+    compute_hash(new_commit->name, new_commit->hash);
+    return new_commit;
+}
+
+Commit * remove_file(Commit * old_commit, const char *path){
+    FileNode *check_file = old_commit->files;
+    int find = 0;
+    while (check_file != NULL){
+        if (strcmp(check_file->name, path) == 0){
+            find = 1;
+            break;
+        }
+        check_file = check_file->next;
+    }
+    if (!find) {
+        return old_commit; 
+    }
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "remove file %s", path);
+    Commit * new_commit = create_commit_struct(old_commit, buffer);
+
+    FileNode *current_file = new_commit->files;
+    FileNode *prev_file = NULL;
+    while (current_file != NULL){
+        if (strcmp(current_file->name, path) == 0){
+            if (prev_file == NULL) {
+                new_commit->files = current_file->next;
+            } else {
+                prev_file->next = current_file->next;
+            }
+            free(current_file);
+            break;
+        }
+        prev_file = current_file;
+        current_file = current_file->next;
+    }
     compute_hash(new_commit->name, new_commit->hash);
     return new_commit;
 }
