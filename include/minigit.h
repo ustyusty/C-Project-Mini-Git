@@ -23,4 +23,8 @@ typedef struct Commit{
 Commit* init_repo();
 void compute_hash(const char *data, char *out_hash);
 
+FileNode* cpy_files(FileNode *file);
+Commit* add_file(Commit* old_commit, const char *path, const char *content);
+Commit* remove_file(Commit * old_commit, const char *path);
+
 #endif
