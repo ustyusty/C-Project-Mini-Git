@@ -143,26 +143,35 @@ Commit * commit(Commit* staging_commit, const char *msg){
     return staging_commit;
 }
 
-char * get_file_content(Commit* commit, const char *path){
-    if (!commit) return NULL;
-    FileNode * current_file = commit->files;
-    while(current_file!=NULL){
-        if (strcmp(current_file->name, path) == 0){
-            return current_file->content;
-        }
-        current_file = current_file->next;
+void print_commit(Commit* staging_commit){
+    if (!staging_commit) return;
+    struct tm *tm = localtime(&staging_commit->timestamp);  
+
+    printf("\033[33mcommit %s\033[0m\n", staging_commit->hash);
+
+    if (staging_commit->parent!=NULL){
+        printf("\033[32mparent: %s\033[0m\n", staging_commit->parent->hash);
     }
-    return NULL;
+
+    printf("Date: %s\n", asctime(tm));
+    printf("    %s\n\n" , staging_commit->name ? staging_commit->name : "(no commit message / staging)");
+    print_files(staging_commit);
 }
 
-bool get_file_exists(Commit* commit, const char *path){
-    if (!commit) return false;
-    FileNode * current_file = commit->files;
-    while(current_file!=NULL){
-        if (strcmp(current_file->name, path) == 0){
-            return true;
-        }
+void print_history(Commit* staging_commit){
+    Commit* current_comm = staging_commit;
+    while (current_comm!=NULL){
+        print_commit(current_comm);
+        current_comm = current_comm->parent;
+    }
+}
+
+void print_files(Commit* staging_commit){
+    FileNode*current_file = staging_commit->files;
+    while (current_file!=NULL){
+        printf("  - %s [%s]\n", current_file->name, current_file->hash);
         current_file = current_file->next;
     }
-    return false;
+    printf("\n");
+    
 }
