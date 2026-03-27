@@ -2,6 +2,7 @@
 #define MINIGIT_H
 
 #include <time.h>
+#include <stdbool.h>
 /* 
 Cтруктура хранения файла:
 
@@ -39,8 +40,10 @@ typedef struct Commit{
 Commit* init_repo();
 void compute_hash(const char *data, char *out_hash);
 
-FileNode* cpy_files(FileNode *file);
 Commit* add_file(Commit* old_commit, const char *path, const char *content);
 Commit* remove_file(Commit * old_commit, const char *path);
+Commit * commit(Commit* staging_commit, const char *msg);
+char * get_file_content(Commit* commit, const char *path);
+bool get_file_exists(Commit* commit, const char *path);
 
 #endif

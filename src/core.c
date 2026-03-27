@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include "../include/minigit.h"
 
@@ -18,7 +19,6 @@ Commit* init_repo() {
 
     return root;
 }
-
 
 Commit* add_file(Commit* old_commit, const char *path, const char *content) {
     Commit* new_commit = (Commit*)malloc(sizeof(Commit));
@@ -74,7 +74,7 @@ Commit* add_file(Commit* old_commit, const char *path, const char *content) {
     return new_commit;
 }
 
-Commit * remove_file(Commit * old_commit, const char *path){
+Commit * remove_file(Commit* old_commit, const char *path){
     FileNode *check_file = old_commit->files;
     int find = 0;
     while (check_file != NULL){
@@ -125,4 +125,44 @@ Commit * remove_file(Commit * old_commit, const char *path){
     }
     new_commit->files = new_head;
     return new_commit;
+}
+
+Commit * commit(Commit* staging_commit, const char *msg){
+    if (!staging_commit) return NULL;
+
+    staging_commit->timestamp = time(NULL);
+    staging_commit->name = strdup(msg);
+
+    char buffer[512];
+    if (staging_commit->parent) {
+        snprintf(buffer, sizeof(buffer), "%s%s%ld", msg, staging_commit->parent->hash, staging_commit->timestamp);
+    } else {
+        snprintf(buffer, sizeof(buffer), "%s%ld", msg, staging_commit->timestamp);
+    }
+    compute_hash(buffer, staging_commit->hash);
+    return staging_commit;
+}
+
+char * get_file_content(Commit* commit, const char *path){
+    if (!commit) return NULL;
+    FileNode * current_file = commit->files;
+    while(current_file!=NULL){
+        if (strcmp(current_file->name, path) == 0){
+            return current_file->content;
+        }
+        current_file = current_file->next;
+    }
+    return NULL;
+}
+
+bool get_file_exists(Commit* commit, const char *path){
+    if (!commit) return false;
+    FileNode * current_file = commit->files;
+    while(current_file!=NULL){
+        if (strcmp(current_file->name, path) == 0){
+            return true;
+        }
+        current_file = current_file->next;
+    }
+    return false;
 }
