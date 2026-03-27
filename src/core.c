@@ -19,66 +19,58 @@ Commit* init_repo() {
     return root;
 }
 
-FileNode* cpy_files(FileNode *files) {
-    FileNode *old_current = files;
-    FileNode *new_head = NULL;
-    FileNode *current = new_head;
-
-    while (old_current != NULL) {
-        FileNode* new_file = (FileNode*)malloc(sizeof(FileNode));
-
-        new_file->name = old_current->name;
-        new_file->content = old_current->content;
-        memcpy(new_file->hash, old_current->hash, sizeof(old_current->hash));
-        if (new_head == NULL) {
-            new_head = new_file;
-        } else {
-            current->next = new_file;
-        }
-        new_file->next = NULL;
-        current = new_file;
-        old_current = old_current->next;
-        
-    }
-    return new_head;
-}
-
-Commit* create_commit_struct(Commit* parent, const char* msg) {
-    Commit* c = (Commit*)malloc(sizeof(Commit));
-    c->parent = parent;
-    c->name = strdup(msg);
-    c->timestamp = time(NULL);
-    c->files = cpy_files(parent->files);
-    compute_hash(c->name, c->hash);
-    return c;
-}
 
 Commit* add_file(Commit* old_commit, const char *path, const char *content) {
-    
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer), "add file %s", path);
-    Commit * new_commit = create_commit_struct(old_commit, buffer);
+    Commit* new_commit = (Commit*)malloc(sizeof(Commit));
+    new_commit->parent = old_commit;
+    new_commit->files = old_commit->files;
+    new_commit->name = NULL; // Или "staging", чтобы не упал хеш
+    new_commit->timestamp = time(NULL);
 
+    FileNode *new_head = NULL;
+    FileNode *prev_file = NULL;
     FileNode *current_file = new_commit->files;
+
     while (current_file != NULL){
         if (strcmp(current_file->name, path) == 0){
+            FileNode *updated_file = (FileNode*)malloc(sizeof(FileNode));
+            updated_file->name = strdup(path);
+            updated_file->content = strdup(content);
+            compute_hash(updated_file->content, updated_file->hash);
+
+            updated_file->next = current_file->next;
+            if (new_head == NULL) new_head = updated_file;
+            else prev_file->next = updated_file;
             break;
+
+        } else {
+            FileNode *copy = (FileNode*)malloc(sizeof(FileNode));
+            copy->name = current_file->name;
+            copy->content = current_file->content;
+            memcpy(copy->hash, current_file->hash, sizeof(current_file->hash));
+            copy->next = NULL;
+            
+            if (new_head == NULL) {
+                new_head = copy;
+                prev_file = copy;
+
+            } else {
+                prev_file->next = copy;
+                prev_file = copy;
+            }
         }
         current_file = current_file->next;
     }
+
     if (current_file == NULL){
         current_file = (FileNode*)malloc(sizeof(FileNode));
         current_file->name = strdup(path);
         current_file->content = strdup(content);
-
         current_file->next = new_commit->files;
         new_commit->files = current_file;
 
-    } else {
-        current_file->content = strdup(content);
     }
     compute_hash(current_file->content, current_file->hash);
-    compute_hash(new_commit->name, new_commit->hash);
     return new_commit;
 }
 
@@ -96,25 +88,41 @@ Commit * remove_file(Commit * old_commit, const char *path){
         return old_commit; 
     }
 
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer), "remove file %s", path);
-    Commit * new_commit = create_commit_struct(old_commit, buffer);
+    Commit* new_commit = (Commit*)malloc(sizeof(Commit));
+    new_commit->parent = old_commit;
+    new_commit->name = NULL;
+    new_commit->timestamp = time(NULL);
 
-    FileNode *current_file = new_commit->files;
+    
+    FileNode *current_file = old_commit->files;
+    FileNode *new_head = NULL;
     FileNode *prev_file = NULL;
     while (current_file != NULL){
         if (strcmp(current_file->name, path) == 0){
-            if (prev_file == NULL) {
-                new_commit->files = current_file->next;
+            if (new_head == NULL) {
+                new_head = current_file->next;
             } else {
-                prev_file->next = current_file->next;
+                prev_file = current_file->next;
             }
-            free(current_file);
             break;
+        } else {
+            FileNode *copy = (FileNode*)malloc(sizeof(FileNode));
+            copy->name = current_file->name;
+            copy->content = current_file->content;
+            memcpy(copy->hash, current_file->hash, sizeof(current_file->hash));
+            copy->next = NULL;
+            
+            if (new_head == NULL) {
+                new_head = copy;
+                prev_file = copy;
+
+            } else {
+                prev_file->next = copy;
+                prev_file = copy;
+            }
         }
-        prev_file = current_file;
         current_file = current_file->next;
     }
-    compute_hash(new_commit->name, new_commit->hash);
+    new_commit->files = new_head;
     return new_commit;
 }
