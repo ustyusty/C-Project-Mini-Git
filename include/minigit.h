@@ -4,13 +4,13 @@
 #include <time.h>
 #include <stdbool.h>
 /* 
-Cтруктура хранения файла:
+### Cтруктура хранения файла:
 
-`char` *name - название/путь
-`char` *content - содержимое
-`char` hash[41]
+- `char` *name - название/путь
+- `char` *content - содержимое
+- `char` hash[41]
 
-`FileNode` *next
+- `FileNode` *next
 */
 typedef struct FileNode {
     char *name;
@@ -19,14 +19,14 @@ typedef struct FileNode {
     struct FileNode *next;
 } FileNode;
 /*
-Cтруктура коммита:
+### Cтруктура коммита:
 
-`char` hash[41]
-`char` *name - название
-`time_t` timestamp - время создания
+- `char` hash[41]
+- `char` *name - название
+- `time_t` timestamp - время создания
 
-`FileNode` *files
-`Commit` *parent - предыдущий коммит
+- `FileNode` *files
+- `Commit` *parent - предыдущий коммит
 */
 typedef struct Commit{
     char hash[41];

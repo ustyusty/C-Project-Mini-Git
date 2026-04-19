@@ -6,3 +6,4 @@ minigit
 
 .vscode/
 *.swp
+.minigit/
