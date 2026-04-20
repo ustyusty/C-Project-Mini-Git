@@ -4,13 +4,13 @@
 #include <time.h>
 #include <stdbool.h>
 /* 
-### Cтруктура хранения файла:
-
-- `char` *name - название/путь
-- `char` *content - содержимое
-- `char` hash[41]
-
-- `FileNode` *next
+* Cтруктура хранения файла:
+* 
+* - `char` *name - название/путь
+* - `char` *content - содержимое
+* - `char` hash[41]
+* 
+* - `FileNode` *next
 */
 typedef struct FileNode {
     char *name;
@@ -19,14 +19,13 @@ typedef struct FileNode {
     struct FileNode *next;
 } FileNode;
 /*
-### Cтруктура коммита:
-
-- `char` hash[41]
-- `char` *name - название
-- `time_t` timestamp - время создания
-
-- `FileNode` *files
-- `Commit` *parent - предыдущий коммит
+* Cтруктура коммита:
+* - `char` hash[41]
+* - `char` *name - название
+* - `time_t` timestamp - время создания
+*
+* - `FileNode` *files
+* - `Commit` *parent - предыдущий коммит
 */
 typedef struct Commit{
     char hash[41];
@@ -51,4 +50,9 @@ void print_commit(Commit* staging_commit);
 void print_history(Commit* staging_commit);
 void print_files(Commit* staging_commit);
 
+char* read_file_from_disk(const char *path);
+void save_blob(const char *content, const char *hash);
+void save_commit(struct Commit *c);
+Commit* load_commit(FILE *f, char *temp_parent_hash);
+Commit* load_repo();
 #endif

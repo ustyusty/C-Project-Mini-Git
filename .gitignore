@@ -1,9 +1,9 @@
 *.exe
 *.out
 minigit
+.minigit/
 
 *.o
 
 .vscode/
 *.swp
-.minigit/

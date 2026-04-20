@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "../include/minigit.h"
+#include "../include/logging.h"
+
 
 Commit* init_repo() {
 
@@ -14,30 +16,29 @@ Commit* init_repo() {
     root->timestamp = time(NULL);
     root->parent = NULL;
     root->files = NULL;
-
+    
     compute_hash(root->name, root->hash);
-
+    LOG(LOG_INFO, "Initialized empty MiniGit repository with initial commit hash: %s", root->hash);
     return root;
 }
 
 Commit* add_file(Commit* old_commit, const char *path, const char *content) {
     Commit* new_commit = (Commit*)malloc(sizeof(Commit));
-    new_commit->parent = old_commit;
+    new_commit->parent = old_commit->parent ? old_commit->parent: old_commit;
     new_commit->files = old_commit->files;
-    new_commit->name = NULL; // Или "staging", чтобы не упал хеш
+    new_commit->name = NULL;
     new_commit->timestamp = time(NULL);
 
     FileNode *new_head = NULL;
     FileNode *prev_file = NULL;
     FileNode *current_file = new_commit->files;
-
+    char buffer[512];
+    snprintf(buffer, sizeof(buffer), "%s%ld", path, (long)new_commit->timestamp);
     while (current_file != NULL){
         if (strcmp(current_file->name, path) == 0){
             FileNode *updated_file = (FileNode*)malloc(sizeof(FileNode));
             updated_file->name = strdup(path);
             updated_file->content = strdup(content);
-            compute_hash(updated_file->content, updated_file->hash);
-
             updated_file->next = current_file->next;
             if (new_head == NULL) new_head = updated_file;
             else prev_file->next = updated_file;
@@ -70,7 +71,8 @@ Commit* add_file(Commit* old_commit, const char *path, const char *content) {
         new_commit->files = current_file;
 
     }
-    compute_hash(current_file->content, current_file->hash);
+    compute_hash(buffer, current_file->hash);
+    save_blob(current_file->content, current_file->hash);
     return new_commit;
 }
 
@@ -127,19 +129,17 @@ Commit * remove_file(Commit* old_commit, const char *path){
     return new_commit;
 }
 
-Commit * commit(Commit* staging_commit, const char *msg){
+Commit* commit(Commit* staging_commit, const char *msg) {
     if (!staging_commit) return NULL;
 
-    staging_commit->timestamp = time(NULL);
-    staging_commit->name = strdup(msg);
+    if (staging_commit->name) free(staging_commit->name); 
 
+    staging_commit->name = strdup(msg);
+    
     char buffer[512];
-    if (staging_commit->parent) {
-        snprintf(buffer, sizeof(buffer), "%s%s%ld", msg, staging_commit->parent->hash, staging_commit->timestamp);
-    } else {
-        snprintf(buffer, sizeof(buffer), "%s%ld", msg, staging_commit->timestamp);
-    }
+    snprintf(buffer, sizeof(buffer), "%s%ld", msg, (long)staging_commit->timestamp);
     compute_hash(buffer, staging_commit->hash);
+
     return staging_commit;
 }
 
