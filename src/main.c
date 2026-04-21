@@ -11,8 +11,12 @@ int main(int argc, char* argv[]){
         printf("Usage: minigit <command> [<args>]\n");
         return 1;
     }
-
+    
     if (strcmp(argv[1], "init") == 0) {
+        if (head) {
+            printf("Repository already initialized.\n");
+            return 1;
+        }
         head = init_repo();
         save_commit(head);
     }

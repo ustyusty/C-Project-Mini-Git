@@ -20,7 +20,7 @@ void compute_hash(const char *data, char *out_hash){
     }
 
     sprintf(out_hash, "%08x", hash);
-    LOG(INFO, "Computed hash: %s", out_hash);
+    LOG(DEBUG, "Computed hash: %s", out_hash);
 }
 
 /**
@@ -96,7 +96,7 @@ void save_blob(const char *content, const char *hash) {
         return;
     }
 
-    LOG(INFO, "Blob saved: %s", hash);
+    LOG(DEBUG, "Blob saved: %s", hash);
     fclose(f);
 }
 
@@ -146,7 +146,7 @@ void save_commit(struct Commit *c) {
     // Маркер конца списка файлов для данного коммита
     fwrite(empty_hash, sizeof(char), 9, f);
     
-    LOG(INFO, "Commit %s saved to history", c->hash);
+    LOG(DEBUG, "Commit %s saved to history", c->hash);
     fclose(f);
 }
 
@@ -249,7 +249,7 @@ Commit* load_repo() {
 
     if (total_commits > 0) {
         Commit* last = all_commits[total_commits - 1];
-        LOG(INFO, "Loaded repository. Latest commit: %s. Parent: %s", last->hash, last->parent ? last->parent->hash : "None");
+        LOG(DEBUG, "Loaded repository. Latest commit: %s. Parent: %s", last->hash, last->parent ? last->parent->hash : "None");
         return last;
     }
 

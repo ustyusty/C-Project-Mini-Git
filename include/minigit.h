@@ -12,7 +12,7 @@ typedef enum LogLevel {
     ERROR
 } LogLevel;
 
-#define LOG_LEVEL DEBUG
+#define LOG_LEVEL INFO
 
 /* 
 * Cтруктура хранения файла:
