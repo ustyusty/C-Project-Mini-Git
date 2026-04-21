@@ -9,4 +9,8 @@ minigit: $(OBJ)
 	$(CC) $(CFLAGS) -o minigit $(OBJ)
 
 clean:
+	rm -f .minigit/history.dat
+	rm -rf .minigit/objects/*
 	rm -f src/*.o minigit
+
+reset: clean all

@@ -3,6 +3,17 @@
 
 #include <time.h>
 #include <stdbool.h>
+/*
+* Уровни логирования
+*/
+typedef enum LogLevel {
+    DEBUG,
+    INFO,
+    ERROR
+} LogLevel;
+
+#define LOG_LEVEL DEBUG
+
 /* 
 * Cтруктура хранения файла:
 * 
