@@ -255,3 +255,30 @@ Commit* load_repo() {
 
     return NULL;
 }
+
+/**
+ * @brief Выводит информацию о коммите.
+ */
+void print_commit(Commit* staging_commit){
+    if (!staging_commit) return;
+    struct tm *tm = localtime(&staging_commit->timestamp);
+    printf("\033[33mcommit %s\033[0m\n", staging_commit->hash);
+
+    if (staging_commit->parent!=NULL){
+        printf("\033[32mparent: %s\033[0m\n", staging_commit->parent->hash);
+
+    }
+    printf("Date: %s\n", asctime(tm));
+    printf(" %s\n\n" , staging_commit->name ? staging_commit->name : "(no commit message / staging)");
+    print_files(staging_commit);
+}
+
+void print_files(Commit* staging_commit){
+    FileNode*current_file = staging_commit->files;
+    while (current_file!=NULL){
+        printf("  - %s [%s]\n", current_file->name, current_file->hash);
+        current_file = current_file->next;
+    }
+    printf("\n");
+    
+}
