@@ -1,12 +1,29 @@
 CC = clang
 CFLAGS = -Wall -Wextra -Iinclude -g
 
-OBJ = src/main.o src/core.o src/storage.o 
+OBJ = src/main.o src/core.o src/storage.o
 
-all: minigit
+# Определение ОС
+ifeq ($(OS),Windows_NT)
+    RM_FILE = del /Q
+    RM_DIR = rmdir /S /Q
+    EXE = .exe
+else
+    RM_FILE = rm -f
+    RM_DIR = rm -rf
+    EXE =
+endif
 
-minigit: $(OBJ)
-	$(CC) $(CFLAGS) -o minigit $(OBJ)
+TARGET = minigit$(EXE)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
 
 clean:
-	rm -f src/*.o minigit
+	-$(RM_FILE) .minigit/history.dat
+	-$(RM_DIR) .minigit/objects
+	-$(RM_FILE) src\*.o $(TARGET)
+
+reset: clean all
