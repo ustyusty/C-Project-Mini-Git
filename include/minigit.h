@@ -64,6 +64,11 @@ void print_files(Commit* staging_commit);
 char* read_file_from_disk(const char *path);
 void save_blob(const char *content, const char *hash);
 void save_commit(struct Commit *c);
+void save_staging(struct Commit *staging);
+void save_head(Commit* head_commit);
 Commit* load_commit(FILE *f, char *temp_parent_hash);
 Commit* load_repo();
+Commit* load_staging(Commit* head);
+void clear_staging();
+char* load_head_hash(char *out_hash);
 #endif

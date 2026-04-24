@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
 #include "../include/minigit.h"
 #include "../include/logging.h"
 
@@ -248,8 +249,21 @@ Commit* load_repo() {
     }
 
     if (total_commits > 0) {
+        // 3. Загружаем HEAD хеш и ищем соответствующий коммит
+        char head_hash[9] = {0};
+        if (load_head_hash(head_hash)) {
+            for (int i = 0; i < total_commits; i++) {
+                if (strcmp(head_hash, all_commits[i]->hash) == 0) {
+                    LOG(DEBUG, "Found HEAD commit: %s", head_hash);
+                    return all_commits[i];
+                }
+            }
+            LOG(ERROR, "HEAD commit %s not found in history!", head_hash);
+        }
+        
+        // Fallback: вернем последний коммит если HEAD не найден или не существует
         Commit* last = all_commits[total_commits - 1];
-        LOG(DEBUG, "Loaded repository. Latest commit: %s. Parent: %s", last->hash, last->parent ? last->parent->hash : "None");
+        LOG(DEBUG, "Using fallback: Latest commit: %s. Parent: %s", last->hash, last->parent ? last->parent->hash : "None");
         return last;
     }
 
@@ -281,4 +295,163 @@ void print_files(Commit* staging_commit){
     }
     printf("\n");
     
+}
+
+/**
+ * @brief Сохраняет staging коммит в отдельный файл.
+ */
+void save_staging(struct Commit *staging) {
+    if (!staging) return;
+    
+    FILE *f = fopen(".minigit/staging", "wb");
+    if (!f) {
+        LOG(ERROR, "Failed to open staging file for writing");
+        return;
+    }
+
+    // Записываем хеш staging коммита
+    fwrite(staging->hash, sizeof(char), 9, f);
+    
+    // Записываем хеш родителя
+    char empty_hash[9] = {0};
+    if (staging->parent) {
+        fwrite(staging->parent->hash, sizeof(char), 9, f);
+    } else {
+        fwrite(empty_hash, sizeof(char), 9, f);
+    }
+
+    // Записываем временную метку
+    fwrite(&(staging->timestamp), sizeof(time_t), 1, f);
+
+    // Итерация по списку файлов staging
+    FileNode *cur = staging->files;
+    while (cur != NULL) {
+        fwrite(cur->hash, sizeof(char), 9, f);
+
+        int path_len = strlen(cur->name);
+        fwrite(&path_len, sizeof(int), 1, f);
+        fwrite(cur->name, sizeof(char), path_len, f);
+
+        cur = cur->next;
+    }
+
+    // Маркер конца списка файлов
+    fwrite(empty_hash, sizeof(char), 9, f);
+    
+    LOG(DEBUG, "Staging saved with files");
+    fclose(f);
+}
+
+/**
+ * @brief Загружает staging коммит из файла.
+ * @param head Базовый коммит для связывания как parent.
+ */
+Commit* load_staging(Commit* head) {
+    FILE *f = fopen(".minigit/staging", "rb");
+    if (!f) {
+        LOG(DEBUG, "No staging file found.");
+        return head;
+    }
+
+    Commit *staging = (Commit*)malloc(sizeof(Commit));
+    if (!staging) {
+        LOG(ERROR, "Memory allocation failed for staging");
+        fclose(f);
+        return head;
+    }
+
+    // Читаем хеш staging
+    fread(staging->hash, sizeof(char), 9, f);
+
+    // Читаем хеш родителя
+    char parent_hash[9];
+    fread(parent_hash, sizeof(char), 9, f);
+
+    // Связываем с head как parent
+    staging->parent = head;
+    staging->name = NULL;
+
+    // Читаем timestamp
+    fread(&(staging->timestamp), sizeof(time_t), 1, f);
+
+    // Загружаем файлы
+    staging->files = NULL;
+    FileNode *last_node = NULL;
+
+    while (1) {
+        char file_hash[9];
+        fread(file_hash, sizeof(char), 9, f);
+
+        if (file_hash[0] == '\0') break; // Конец списка
+
+        int path_len;
+        fread(&path_len, sizeof(int), 1, f);
+
+        char *path = (char*)malloc(path_len + 1);
+        fread(path, sizeof(char), path_len, f);
+        path[path_len] = '\0';
+
+        FileNode *fn = (FileNode*)malloc(sizeof(FileNode));
+        fn->name = path;
+        fn->content = NULL; // Контент не загружаем, используем blob
+        memcpy(fn->hash, file_hash, 9);
+        fn->next = NULL;
+
+        if (!staging->files) staging->files = fn;
+        else last_node->next = fn;
+        last_node = fn;
+    }
+
+    fclose(f);
+    LOG(INFO, "Staging loaded");
+    return staging;
+}
+
+/**
+ * @brief Удаляет файл staging (после успешного commit).
+ */
+void clear_staging() {
+    if (remove(".minigit/staging") != 0) {
+        LOG(DEBUG, "No staging file to remove");
+    } else {
+        LOG(DEBUG, "Staging cleared");
+    }
+}
+
+/**
+ * @brief Сохраняет хеш текущего HEAD в файл.
+ */
+void save_head(Commit* head_commit) {
+    if (!head_commit) return;
+    
+    FILE *f = fopen(".minigit/HEAD", "wb");
+    if (!f) {
+        LOG(ERROR, "Failed to open HEAD file for writing");
+        return;
+    }
+    
+    fwrite(head_commit->hash, sizeof(char), 9, f);
+    LOG(DEBUG, "HEAD saved: %s", head_commit->hash);
+    fclose(f);
+}
+
+/**
+ * @brief Загружает хеш HEAD из файла.
+ */
+char* load_head_hash(char *out_hash) {
+    FILE *f = fopen(".minigit/HEAD", "rb");
+    if (!f) {
+        LOG(DEBUG, "No HEAD file found");
+        return NULL;
+    }
+    
+    if (fread(out_hash, sizeof(char), 9, f) < 9) {
+        LOG(DEBUG, "Failed to read HEAD hash");
+        fclose(f);
+        return NULL;
+    }
+    
+    fclose(f);
+    LOG(DEBUG, "HEAD loaded: %s", out_hash);
+    return out_hash;
 }

@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "../include/minigit.h"
 #include "../include/logging.h"
 
@@ -11,6 +13,16 @@
  * * @return `Commit*` Указатель на выделенный корневой коммит.
  */
 Commit* init_repo() {
+    // Создаём директории для репозитория
+    if (mkdir(".minigit", 0755) != 0 && errno != EEXIST) {
+        LOG(ERROR, "Failed to create .minigit directory");
+        return NULL;
+    }
+    if (mkdir(".minigit/objects", 0755) != 0 && errno != EEXIST) {
+        LOG(ERROR, "Failed to create .minigit/objects directory");
+        return NULL;
+    }
+
     Commit *root = (Commit*)malloc(sizeof(Commit));
     if (!root) { 
         LOG(ERROR, "Failed to allocate memory for root commit"); 
@@ -151,7 +163,7 @@ Commit* commit(Commit* staging_head, const char *msg) {
     if (!new_commit) return NULL;
     memset(new_commit, 0, sizeof(Commit));
 
-    new_commit->parent = staging_head;
+    new_commit->parent = staging_head ? staging_head->parent : NULL;
 
     new_commit->files = staging_head ? staging_head->files : NULL;
 
