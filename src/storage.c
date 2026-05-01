@@ -222,7 +222,6 @@ Commit* load_repo() {
     char temp_hashes[1000][9];
     memset(temp_hashes, 0, sizeof(temp_hashes));
 
-    // 1. Сначала загружаем все коммиты "плоским" списком
     while (total_commits < 1000) {
         Commit *c = load_commit(f, temp_hashes[total_commits]);
         if (!c) break;
@@ -230,7 +229,6 @@ Commit* load_repo() {
     }
     fclose(f);
 
-    // 2. Связываем указатели родительских коммитов по сохраненным хешам
     for (int i = 0; i < total_commits; i++) {
         if (temp_hashes[i][0] != '\0') {
             bool found = false;
@@ -249,7 +247,6 @@ Commit* load_repo() {
     }
 
     if (total_commits > 0) {
-        // 3. Загружаем HEAD хеш и ищем соответствующий коммит
         char head_hash[9] = {0};
         if (load_head_hash(head_hash)) {
             for (int i = 0; i < total_commits; i++) {
@@ -261,7 +258,6 @@ Commit* load_repo() {
             LOG(ERROR, "HEAD commit %s not found in history!", head_hash);
         }
         
-        // Fallback: вернем последний коммит если HEAD не найден или не существует
         Commit* last = all_commits[total_commits - 1];
         LOG(DEBUG, "Using fallback: Latest commit: %s. Parent: %s", last->hash, last->parent ? last->parent->hash : "None");
         return last;
